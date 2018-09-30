@@ -5,8 +5,15 @@ using UnityEngine;
 
 [RequireComponent(typeof(CharacterController))]
 [RequireComponent(typeof(ControllerInputProvider))]
+[RequireComponent(typeof(CharacterController))]
 public class CharacterMovement : MonoBehaviour
 {
+    // Components
+    [HideInInspector] private CharacterController characterController;
+    [HideInInspector] public CapsuleCollider capsule;
+    private CharacterInputProvider inputProvider;
+
+    // Inspector Settings
     [Serializable]
     public class MovementSettings
     {
@@ -22,7 +29,7 @@ public class CharacterMovement : MonoBehaviour
         public float AirMovementMultiplier = 0.5f; // multiplies the movement force when in the air
 
         // Jump parameters
-        private float jumpHeight = 5f;
+        private float jumpHeight = 3f;
         private float jumpDistance = 10f;
 
         public float JumpHeight
@@ -95,24 +102,30 @@ public class CharacterMovement : MonoBehaviour
             ResetJumpConstants();
         }
     }
+    public MovementSettings movementSettings = new MovementSettings();
 
     public Transform PlayerCamera;
     public float PlayerViewYOffset = 0.6f;
 
-    public MovementSettings movementSettings = new MovementSettings();
-    public MouseLook mouseLook = new MouseLook();
-
     public bool LockCursor = true;
+    public MouseLook Mouse = new MouseLook();
 
-    [HideInInspector] public CharacterController characterController;
-    private CharacterInputProvider inputProvider;
-    private CapsuleCollider capsule;
-    private float yRotation;
-
-    private Vector3 velocity = Vector3.zero;
-    private bool jump, previouslyGrounded, jumping, isGrounded;
+    // Control variables
+    private Vector3 playerVelocity = Vector3.zero;
+    public bool IsGrounded { get { return characterController.isGrounded; } }
 
     [HideInInspector] public bool AbilityLockout = false;
+    [HideInInspector] public bool ColliderEnabled
+    {
+        get
+        {
+            return capsule.enabled;
+        }
+        set
+        {
+            capsule.enabled = value;
+        }
+    }
 
     // Use this for initialization
     void Start()
@@ -122,7 +135,7 @@ public class CharacterMovement : MonoBehaviour
         inputProvider = GetComponent<CharacterInputProvider>();
         characterController = GetComponent<CharacterController>();
 
-        mouseLook.Init(transform, PlayerCamera, inputProvider);
+        Mouse.Init(transform, PlayerCamera, inputProvider);
         updateCamera();
     }
 
@@ -139,10 +152,30 @@ public class CharacterMovement : MonoBehaviour
 
             verticalMove();
 
-            characterController.Move(velocity * Time.deltaTime);
+            Move(playerVelocity * Time.deltaTime);
         }
 
         updateCamera();
+    }
+
+    public void Move(Vector3 velocity)
+    {
+        characterController.Move(velocity);
+    }
+
+    private void horizontalMove(Vector2 input)
+    {
+        if (input.magnitude > 1)
+            input.Normalize();
+
+        Vector2 desiredVelocity = input * new Vector2(
+            movementSettings.StrafeSpeed,
+            input.y > 0 ?
+            movementSettings.ForwardSpeed :
+            movementSettings.BackwardSpeed
+        );
+
+        playerVelocity = transform.TransformDirection(new Vector3(desiredVelocity.x, playerVelocity.y, desiredVelocity.y));
     }
 
     private void verticalMove()
@@ -151,20 +184,20 @@ public class CharacterMovement : MonoBehaviour
         {
             if (inputProvider.Jump)
             {
-                velocity = new Vector3(velocity.x, movementSettings.JumpForce, velocity.z);
+                playerVelocity = new Vector3(playerVelocity.x, movementSettings.JumpForce, playerVelocity.z);
             }
             else
             {
-                velocity = new Vector3(velocity.x, 0, velocity.z);
+                playerVelocity = new Vector3(playerVelocity.x, 0, playerVelocity.z);
             }
         }
 
-        velocity -= new Vector3(0, movementSettings.Gravity * Time.deltaTime, 0);
+        playerVelocity -= new Vector3(0, movementSettings.Gravity * Time.deltaTime, 0);
     }
 
     private void updateCamera()
     {
-        mouseLook.LookRotation(transform, PlayerCamera);
+        Mouse.LookRotation(transform, PlayerCamera);
 
         PlayerCamera.transform.position = new Vector3(
             transform.position.x,
@@ -186,18 +219,4 @@ public class CharacterMovement : MonoBehaviour
         return input;
     }
 
-    private void horizontalMove(Vector2 input)
-    {
-        if (input.magnitude > 1)
-            input.Normalize();
-
-        Vector2 desiredVelocity = input * new Vector2(
-            movementSettings.StrafeSpeed,
-            input.y > 0 ?
-            movementSettings.ForwardSpeed :
-            movementSettings.BackwardSpeed
-        );
-
-        velocity = transform.TransformDirection(new Vector3(desiredVelocity.x, velocity.y, desiredVelocity.y));
-    }
 }
