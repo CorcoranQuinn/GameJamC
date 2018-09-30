@@ -1,0 +1,24 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 09b2da44b44224d26a2220d179c0e245, type: 3}
+  m_Name: KeyboardController
+  m_EditorClassIdentifier: 
+  MouseXAxis: Mouse X
+  MouseYAxis: Mouse Y
+  LookSensitivity: 1
+  SprintKey: 304
+  JumpKey: 32
+  SwitchWeaponKey: 113
+  UseEquipmentKey: 101
+  CraftKey: 99
+  MenuKey: 27
+  MenuSelectKey: 271
+  MenuBackKey: 27
