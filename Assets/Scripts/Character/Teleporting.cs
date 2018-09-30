@@ -2,75 +2,70 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-[RequireComponent(typeof(CharacterController))]
 [RequireComponent(typeof(ControllerInputProvider))]
 [RequireComponent(typeof(CharacterMovement))]
 public class Teleporting : MonoBehaviour
 {
-    public float MaxDistance = 600;
+    public float MaxDistance = 30;
+    public float minDistance = 2;
+    public float TeleportSpeed = 20f;
+
+    public ParticleSystem IndicatorEffect;
     public LayerMask PlayerMask = -1;
-    private GameObject OtherObject;
-    private Collider OtherCollider;
-    public ParticleSystem ParticleEffect;
-    private ParticleSystem indicator;
-    public float TeleSpeed = 0.5f;
-    private RaycastHit teleRay;
-    private float Journey;
-    private float StartTime;
-    private Transform StartMarker;
-    private Transform EndMarker;
-    private bool Teleport;
-    private Vector3 inGround;
 
     private CharacterMovement defaultMovement;
+    private Transform playerCamera;
     private CharacterInputProvider inputProvider;
-    public Transform PlayerCamera;
+    private ParticleSystem indicator = null;
+
+    private bool teleport;
+    private Vector3 target;
+
+    public Vector3 heightOffset = new Vector3(0, 0.5f, 0);
 
     // Use this for initialization
     void Start()
     {
-        inGround = new Vector3(1, 2, 1);
         inputProvider = GetComponent<CharacterInputProvider>();
+
         defaultMovement = GetComponent<CharacterMovement>();
+        playerCamera = defaultMovement.PlayerCamera;
     }
 
     // FixedUpdate is called 60 times per second
     private void FixedUpdate()
     {
-        if (inputProvider.Teleport && indicator == null)
+        Vector3 lookDirection = playerCamera.TransformDirection(Vector3.forward);
+        RaycastHit teleRay;
+        bool hit = Physics.Raycast(transform.position, lookDirection, out teleRay, MaxDistance, PlayerMask.value, QueryTriggerInteraction.Ignore);;
+
+        if ((!hit || !(inputProvider.Teleport || inputProvider.TeleportUp)) && indicator != null)
         {
-            Vector3 direction = PlayerCamera.TransformDirection(Vector3.forward);
-            if (Physics.Raycast(transform.position, direction, out teleRay, MaxDistance, PlayerMask.value, QueryTriggerInteraction.Ignore))
-            {
-                indicator = Instantiate(ParticleEffect, teleRay.point, new Quaternion());
-                OtherObject = teleRay.collider.gameObject;
-                StartMarker = gameObject.GetComponent<Transform>();
-                EndMarker = OtherObject.GetComponent<Transform>();
-            }
-        }
-        if (inputProvider.TeleportUp && indicator != null)
-        {
-            Journey = Vector3.Distance(StartMarker.position, EndMarker.position);
-            StartTime = Time.time;
             Destroy(indicator.gameObject);
             indicator = null;
-            Teleport = true;
-            defaultMovement.AbilityLockout = true;
         }
-    }
-    private void Update()
-    {
-        if (Teleport == true)
+        else if (hit && inputProvider.Teleport && !teleport)
         {
-            float DistCovered = (Time.time - StartTime) * TeleSpeed;
-            float FractionTraveled = DistCovered / Journey;
-            transform.position = Vector3.Lerp(StartMarker.position, EndMarker.position + inGround, FractionTraveled);
-            if (transform.position == EndMarker.position + inGround)
+            if (indicator == null)
             {
-                Teleport = false;
-                defaultMovement.AbilityLockout = false;
+                indicator = Instantiate(IndicatorEffect, teleRay.point, new Quaternion());
+            }
+            else
+            {
+                indicator.transform.position = teleRay.point;
             }
         }
+        else if (hit && inputProvider.TeleportUp)
+        {
+            if (indicator != null)
+            {
+                Destroy(indicator.gameObject);
+                indicator = null;
+            }
 
+            teleport = true;
+            // defaultMovement.AbilityLockout = true;
+        }
     }
+    private void Update() { }
 }
