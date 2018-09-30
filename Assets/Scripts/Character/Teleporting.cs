@@ -48,7 +48,7 @@ public class Teleporting : MonoBehaviour
         {
             if (indicator == null)
             {
-                indicator = Instantiate(IndicatorEffect, teleRay.point, new Quaternion());
+                indicator = Instantiate(IndicatorEffect, teleRay.point, Quaternion.Euler(-90, 0, 0));
             }
             else
             {
