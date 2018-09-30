@@ -13,7 +13,7 @@ public class Teleporting : MonoBehaviour
     public ParticleSystem IndicatorEffect;
     public LayerMask PlayerMask = -1;
 
-    private CharacterMovement defaultMovement;
+    private CharacterMovement characterMovement;
     private Transform playerCamera;
     private CharacterInputProvider inputProvider;
     private ParticleSystem indicator = null;
@@ -21,15 +21,15 @@ public class Teleporting : MonoBehaviour
     private bool teleport;
     private Vector3 target;
 
-    public Vector3 heightOffset = new Vector3(0, 0.5f, 0);
+    private Vector3 heightOffset = new Vector3(0, 1, 0);
 
     // Use this for initialization
     void Start()
     {
         inputProvider = GetComponent<CharacterInputProvider>();
 
-        defaultMovement = GetComponent<CharacterMovement>();
-        playerCamera = defaultMovement.PlayerCamera;
+        characterMovement = GetComponent<CharacterMovement>();
+        playerCamera = characterMovement.PlayerCamera;
     }
 
     // FixedUpdate is called 60 times per second
@@ -37,7 +37,7 @@ public class Teleporting : MonoBehaviour
     {
         Vector3 lookDirection = playerCamera.TransformDirection(Vector3.forward);
         RaycastHit teleRay;
-        bool hit = Physics.Raycast(transform.position, lookDirection, out teleRay, MaxDistance, PlayerMask.value, QueryTriggerInteraction.Ignore);;
+        bool hit = Physics.Raycast(transform.position, lookDirection, out teleRay, MaxDistance, PlayerMask.value, QueryTriggerInteraction.Ignore);
 
         if ((!hit || !(inputProvider.Teleport || inputProvider.TeleportUp)) && indicator != null)
         {
@@ -48,7 +48,7 @@ public class Teleporting : MonoBehaviour
         {
             if (indicator == null)
             {
-                indicator = Instantiate(IndicatorEffect, teleRay.point, Quaternion.Euler(-90, 0, 0));
+                indicator = Instantiate(IndicatorEffect, teleRay.point, Quaternion.Euler(0, 0, 0));
             }
             else
             {
@@ -63,9 +63,27 @@ public class Teleporting : MonoBehaviour
                 indicator = null;
             }
 
+            target = teleRay.point + heightOffset;
             teleport = true;
-            // defaultMovement.AbilityLockout = true;
+            characterMovement.AbilityLockout = true;
         }
     }
-    private void Update() { }
+    private void Update()
+    {
+        if (teleport)
+        {
+            Vector3 path = target - transform.position;
+            Vector3 velocity = path.normalized * TeleportSpeed;
+
+            Debug.Log("Position: " + transform.position.ToString());
+            Debug.Log("Target: " + target.ToString());
+            characterMovement.characterController.Move(velocity * Time.deltaTime);
+
+            if (characterMovement.characterController.isGrounded)
+            {
+                teleport = false;
+                characterMovement.AbilityLockout = false;
+            }
+        }
+    }
 }

@@ -105,7 +105,7 @@ public class CharacterMovement : MonoBehaviour
     // TODO: should probably be moved to an input component
     public bool LockCursor = true;
 
-    private CharacterController characterController;
+    [HideInInspector] public CharacterController characterController;
     private CharacterInputProvider inputProvider;
     private CapsuleCollider capsule;
     private float yRotation;
