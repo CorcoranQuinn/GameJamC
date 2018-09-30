@@ -79,6 +79,7 @@ public class Teleporting : MonoBehaviour
             Debug.Log("Target: " + target.ToString());
             characterMovement.characterController.Move(velocity * Time.deltaTime);
 
+            // TODO Get a better way of stopping, and turn off collision
             if (characterMovement.characterController.isGrounded)
             {
                 teleport = false;

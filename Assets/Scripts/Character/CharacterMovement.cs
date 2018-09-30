@@ -102,7 +102,6 @@ public class CharacterMovement : MonoBehaviour
     public MovementSettings movementSettings = new MovementSettings();
     public MouseLook mouseLook = new MouseLook();
 
-    // TODO: should probably be moved to an input component
     public bool LockCursor = true;
 
     [HideInInspector] public CharacterController characterController;
