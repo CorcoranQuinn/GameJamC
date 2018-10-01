@@ -18,6 +18,9 @@ public class Teleporting : MonoBehaviour
     private CharacterInputProvider inputProvider;
     private ParticleSystem indicator = null;
 
+    private RaycastHit hitRay, teleRay;
+    private bool hit, teleHit;
+
     private bool teleport;
     public bool Teleport
     {
@@ -47,51 +50,8 @@ public class Teleporting : MonoBehaviour
     {
         Vector3 lookDirection = playerCamera.TransformDirection(Vector3.forward);
 
-        RaycastHit hitRay;
-        bool hit = Physics.Raycast(transform.position, lookDirection, out hitRay, MaxDistance, -1, QueryTriggerInteraction.Ignore);
-
-        if (hit)
-        {
-            RaycastHit teleRay;
-            bool teleHit = Physics.Raycast(transform.position, lookDirection, out teleRay, MaxDistance, TeleportLayer.value, QueryTriggerInteraction.Ignore);
-
-            float hitDistance = Vector3.Distance(transform.position, hitRay.point);
-            float teleDistance = Vector3.Distance(transform.position, teleRay.point);
-            teleHit = teleHit && teleDistance > minDistance && teleDistance <= hitDistance;
-
-            if ((!teleHit || !(inputProvider.Teleport || inputProvider.TeleportUp)) && indicator != null)
-            {
-                Destroy(indicator.gameObject);
-                indicator = null;
-            }
-            else if (teleHit && inputProvider.Teleport && !Teleport)
-            {
-                if (indicator == null)
-                {
-                    indicator = Instantiate(IndicatorEffect, teleRay.point, Quaternion.Euler(0, 0, 0));
-                }
-                else
-                {
-                    indicator.transform.position = teleRay.point;
-                }
-            }
-            else if (teleHit && inputProvider.TeleportUp)
-            {
-                if (indicator != null)
-                {
-                    Destroy(indicator.gameObject);
-                    indicator = null;
-                }
-
-                target = teleRay.point + heightOffset;
-                Teleport = true;
-            }
-        }
-        else if (indicator != null)
-        {
-            Destroy(indicator.gameObject);
-            indicator = null;
-        }
+        hit = Physics.Raycast(transform.position, lookDirection, out hitRay, MaxDistance, -1, QueryTriggerInteraction.Ignore);
+        teleHit = Physics.Raycast(transform.position, lookDirection, out teleRay, MaxDistance, TeleportLayer.value, QueryTriggerInteraction.Ignore);
     }
     private void Update()
     {
@@ -105,6 +65,48 @@ public class Teleporting : MonoBehaviour
             if (path.magnitude < 1)
             {
                 Teleport = false;
+            }
+        }
+        else
+        {
+            if (hit)
+            {
+                float hitDistance = Vector3.Distance(transform.position, hitRay.point);
+                float teleDistance = Vector3.Distance(transform.position, teleRay.point);
+                teleHit = teleHit && teleDistance > minDistance && teleDistance <= hitDistance;
+
+                if ((!teleHit || !(inputProvider.Teleport || inputProvider.TeleportUp)) && indicator != null)
+                {
+                    Destroy(indicator.gameObject);
+                    indicator = null;
+                }
+                else if (teleHit && inputProvider.Teleport && !Teleport)
+                {
+                    if (indicator == null)
+                    {
+                        indicator = Instantiate(IndicatorEffect, teleRay.point, Quaternion.Euler(0, 0, 0));
+                    }
+                    else
+                    {
+                        indicator.transform.position = teleRay.point;
+                    }
+                }
+                else if (teleHit && inputProvider.TeleportUp)
+                {
+                    if (indicator != null)
+                    {
+                        Destroy(indicator.gameObject);
+                        indicator = null;
+                    }
+
+                    target = teleRay.point + heightOffset;
+                    Teleport = true;
+                }
+            }
+            else if (indicator != null)
+            {
+                Destroy(indicator.gameObject);
+                indicator = null;
             }
         }
 
