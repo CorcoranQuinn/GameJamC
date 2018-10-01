@@ -144,6 +144,7 @@ public class CharacterMovement : MonoBehaviour
     {
         // Lock cursor to game window
         Cursor.lockState = LockCursor ? CursorLockMode.Locked : CursorLockMode.None;
+        Cursor.visible = false;
 
         if (!AbilityLockout)
         {
