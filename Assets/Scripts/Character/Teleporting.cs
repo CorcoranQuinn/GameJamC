@@ -4,6 +4,7 @@ using UnityEngine;
 
 [RequireComponent(typeof(ControllerInputProvider))]
 [RequireComponent(typeof(CharacterMovement))]
+[RequireComponent(typeof(FirstPersonCamera))]
 public class Teleporting : MonoBehaviour
 {
     public float MaxDistance = 30;
@@ -14,8 +15,8 @@ public class Teleporting : MonoBehaviour
     public LayerMask TeleportLayer = -1;
 
     private CharacterMovement characterMovement;
-    private Transform playerCamera;
     private CharacterInputProvider inputProvider;
+    private FirstPersonCamera playerCamera;
     private ParticleSystem indicator = null;
 
     private RaycastHit hitRay, teleRay;
@@ -28,8 +29,7 @@ public class Teleporting : MonoBehaviour
         set
         {
             teleport = value;
-            characterMovement.AbilityLockout = value;
-            characterMovement.ColliderEnabled = !value;
+            characterMovement.HandleMovement = !value;
         }
     }
     private Vector3 target;
@@ -41,17 +41,18 @@ public class Teleporting : MonoBehaviour
     {
         inputProvider = GetComponent<CharacterInputProvider>();
 
+        playerCamera = GetComponent<FirstPersonCamera>();
         characterMovement = GetComponent<CharacterMovement>();
-        playerCamera = characterMovement.PlayerCamera;
     }
 
     // FixedUpdate is called 60 times per second
     private void FixedUpdate()
     {
-        Vector3 lookDirection = playerCamera.TransformDirection(Vector3.forward);
+        Vector3 cameraPosition = playerCamera.CameraPosition;
+        Vector3 cameraDirection = playerCamera.CameraDirection;
 
-        hit = Physics.Raycast(transform.position, lookDirection, out hitRay, MaxDistance, -1, QueryTriggerInteraction.Ignore);
-        teleHit = Physics.Raycast(transform.position, lookDirection, out teleRay, MaxDistance, TeleportLayer.value, QueryTriggerInteraction.Ignore);
+        hit = Physics.Raycast(cameraPosition, cameraDirection, out hitRay, MaxDistance, -1, QueryTriggerInteraction.Ignore);
+        teleHit = Physics.Raycast(cameraPosition, cameraDirection, out teleRay, MaxDistance, TeleportLayer.value, QueryTriggerInteraction.Ignore);
     }
     private void Update()
     {
@@ -100,7 +101,7 @@ public class Teleporting : MonoBehaviour
                     }
 
                     target = teleRay.point + heightOffset;
-                    Teleport = true;
+                    // Teleport = true;
                 }
             }
             else if (indicator != null)

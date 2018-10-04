@@ -42,5 +42,8 @@ public class KeyboardController : Controller
 
     public override bool TeleportUp => Input.GetMouseButtonUp(0);
 
-    public override bool Jump => Input.GetKeyDown(JumpKey);
+    public override bool Jump => Input.GetKey(JumpKey);
+
+    public override bool JumpPressed => Input.GetKeyDown(JumpKey);
+
 }

@@ -15,4 +15,6 @@ public class ControllerInputProvider : CharacterInputProvider
     public override bool TeleportUp => Controller.TeleportUp;
 
     public override bool Jump => Controller.Jump;
+
+    public override bool JumpPressed => Controller.JumpPressed;
 }

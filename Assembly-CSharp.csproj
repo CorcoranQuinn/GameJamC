@@ -53,6 +53,7 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+     <Compile Include="Assets\Scripts\Character\Camera\FirstPersonCamera.cs" />
      <Compile Include="Assets\Scripts\Character\CharacterMovement.cs" />
      <Compile Include="Assets\Scripts\Character\InputProviders\CharacterInputProvider.cs" />
      <Compile Include="Assets\Scripts\Character\InputProviders\ControllerInputProvider.cs" />
