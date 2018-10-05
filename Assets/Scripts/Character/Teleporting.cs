@@ -4,6 +4,7 @@ using UnityEngine;
 
 [RequireComponent(typeof(ControllerInputProvider))]
 [RequireComponent(typeof(CharacterMovement))]
+[RequireComponent(typeof(FirstPersonCamera))]
 public class Teleporting : MonoBehaviour
 {
     public float MaxDistance = 30;
@@ -14,9 +15,12 @@ public class Teleporting : MonoBehaviour
     public LayerMask TeleportLayer = -1;
 
     private CharacterMovement characterMovement;
-    private Transform playerCamera;
     private CharacterInputProvider inputProvider;
+    private FirstPersonCamera playerCamera;
     private ParticleSystem indicator = null;
+
+    private RaycastHit hitRay, teleRay;
+    private bool hit, teleHit;
 
     private bool teleport;
     public bool Teleport
@@ -25,8 +29,7 @@ public class Teleporting : MonoBehaviour
         set
         {
             teleport = value;
-            characterMovement.AbilityLockout = value;
-            characterMovement.ColliderEnabled = !value;
+            characterMovement.HandleMovement = !value;
         }
     }
     private Vector3 target;
@@ -38,60 +41,18 @@ public class Teleporting : MonoBehaviour
     {
         inputProvider = GetComponent<CharacterInputProvider>();
 
+        playerCamera = GetComponent<FirstPersonCamera>();
         characterMovement = GetComponent<CharacterMovement>();
-        playerCamera = characterMovement.PlayerCamera;
     }
 
     // FixedUpdate is called 60 times per second
     private void FixedUpdate()
     {
-        Vector3 lookDirection = playerCamera.TransformDirection(Vector3.forward);
+        Vector3 cameraPosition = playerCamera.CameraPosition;
+        Vector3 cameraDirection = playerCamera.CameraDirection;
 
-        RaycastHit hitRay;
-        bool hit = Physics.Raycast(transform.position, lookDirection, out hitRay, MaxDistance, -1, QueryTriggerInteraction.Ignore);
-
-        if (hit)
-        {
-            RaycastHit teleRay;
-            bool teleHit = Physics.Raycast(transform.position, lookDirection, out teleRay, MaxDistance, TeleportLayer.value, QueryTriggerInteraction.Ignore);
-
-            float hitDistance = Vector3.Distance(transform.position, hitRay.point);
-            float teleDistance = Vector3.Distance(transform.position, teleRay.point);
-            teleHit = teleHit && teleDistance > minDistance && teleDistance <= hitDistance;
-
-            if ((!teleHit || !(inputProvider.Teleport || inputProvider.TeleportUp)) && indicator != null)
-            {
-                Destroy(indicator.gameObject);
-                indicator = null;
-            }
-            else if (teleHit && inputProvider.Teleport && !Teleport)
-            {
-                if (indicator == null)
-                {
-                    indicator = Instantiate(IndicatorEffect, teleRay.point, Quaternion.Euler(0, 0, 0));
-                }
-                else
-                {
-                    indicator.transform.position = teleRay.point;
-                }
-            }
-            else if (teleHit && inputProvider.TeleportUp)
-            {
-                if (indicator != null)
-                {
-                    Destroy(indicator.gameObject);
-                    indicator = null;
-                }
-
-                target = teleRay.point + heightOffset;
-                Teleport = true;
-            }
-        }
-        else if (indicator != null)
-        {
-            Destroy(indicator.gameObject);
-            indicator = null;
-        }
+        hit = Physics.Raycast(cameraPosition, cameraDirection, out hitRay, MaxDistance, -1, QueryTriggerInteraction.Ignore);
+        teleHit = Physics.Raycast(cameraPosition, cameraDirection, out teleRay, MaxDistance, TeleportLayer.value, QueryTriggerInteraction.Ignore);
     }
     private void Update()
     {
@@ -105,6 +66,48 @@ public class Teleporting : MonoBehaviour
             if (path.magnitude < 1)
             {
                 Teleport = false;
+            }
+        }
+        else
+        {
+            if (hit)
+            {
+                float hitDistance = Vector3.Distance(transform.position, hitRay.point);
+                float teleDistance = Vector3.Distance(transform.position, teleRay.point);
+                teleHit = teleHit && teleDistance > minDistance && teleDistance <= hitDistance;
+
+                if ((!teleHit || !(inputProvider.Teleport || inputProvider.TeleportUp)) && indicator != null)
+                {
+                    Destroy(indicator.gameObject);
+                    indicator = null;
+                }
+                else if (teleHit && inputProvider.Teleport && !Teleport)
+                {
+                    if (indicator == null)
+                    {
+                        indicator = Instantiate(IndicatorEffect, teleRay.point, Quaternion.Euler(0, 0, 0));
+                    }
+                    else
+                    {
+                        indicator.transform.position = teleRay.point;
+                    }
+                }
+                else if (teleHit && inputProvider.TeleportUp)
+                {
+                    if (indicator != null)
+                    {
+                        Destroy(indicator.gameObject);
+                        indicator = null;
+                    }
+
+                    target = teleRay.point + heightOffset;
+                    // Teleport = true;
+                }
+            }
+            else if (indicator != null)
+            {
+                Destroy(indicator.gameObject);
+                indicator = null;
             }
         }
 

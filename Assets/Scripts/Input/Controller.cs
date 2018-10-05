@@ -10,4 +10,5 @@ public abstract class Controller : ScriptableObject
     public abstract bool Teleport { get; }
     public abstract bool TeleportUp { get; }
     public abstract bool Jump { get; }
+    public abstract bool JumpPressed { get; }
 }
